@@ -197,7 +197,9 @@ quizforge/
 
 **"Couldn't reach the backend"** — the API is not running or is on another port. Start it and confirm <http://127.0.0.1:8000/api/health> returns `{"status":"healthy"}`. The sidebar indicator reflects the real result of that poll.
 
-**Frontend shows `CORS` errors** — the origin is not allowed. Add it to `CORS_ORIGINS` in `backend/.env` as a comma-separated list, then restart the backend.
+**Deployed build shows "Couldn't reach the backend"** — `VITE_API_BASE` was not set in the hosting platform's environment, so the bundle has no backend address. See [Deployment](#deployment). The message names the URL it tried, which makes the cause obvious.
+
+**Frontend shows `CORS` errors** — the origin is not allowed. Add it to `CORS_ORIGINS` in `backend/.env` as a comma-separated list, then restart the backend. Note that a comma-separated `CORS_ORIGINS` previously crashed the backend at startup; that is fixed, but a stale deploy may still be running the old code.
 
 **"We couldn't extract readable text"** — the PDF is scanned or image-only. QuizForge does not perform OCR, and it says so rather than pretending to read the file.
 
@@ -206,3 +208,97 @@ quizforge/
 **`ExecutionPolicy` blocks `Activate.ps1`** — either run the commands with the venv's Python directly (`.\venv\Scripts\python.exe ...`) or, in PowerShell, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once.
 
 **Port already in use** — change the `--port` flag for the backend, or set `VITE_API_BASE` in `frontend/.env` to match.
+
+---
+
+## Deployment
+
+Netlify hosts **static files only**, so the frontend and the FastAPI backend are
+deployed separately. The API cannot be served from Netlify.
+
+### The single most common cause of a broken deploy
+
+`VITE_API_BASE` is baked into the bundle at **build** time. If it is not set in
+the hosting platform's environment, the deployed frontend points the browser at
+`http://127.0.0.1:8000` — the **visitor's own machine** — and every request fails
+with "Couldn't reach the backend".
+
+The app no longer hardcodes that fallback: with no `VITE_API_BASE` it calls the
+same origin (`/api`), which is correct whenever a proxy forwards `/api` to the
+backend.
+
+### 1. Deploy the backend
+
+`render.yaml` is included, but any host that runs a Python web service works.
+
+| Step | Detail |
+| --- | --- |
+| Root directory | `backend` |
+| Install | `pip install -r requirements.txt` |
+| Start | `./start.sh` (binds `0.0.0.0` and honours the injected `PORT`) |
+| Health check | `/api/health` |
+
+Set these environment variables on the backend:
+
+| Variable | Value |
+| --- | --- |
+| `CORS_ORIGINS` | **Required.** Your Netlify origin, e.g. `https://your-site.netlify.app` |
+| `OPENAI_API_KEY` | Optional. Unset means the labelled offline generator |
+| `DATABASE_URL` / `UPLOAD_DIR` | See the storage warning below |
+
+> **Storage warning — read this before deploying.**
+> QuizForge stores uploaded PDFs on local disk and uses SQLite. On Render's free
+> and starter web services the filesystem is **ephemeral**: documents, quizzes
+> and results are erased on every restart, redeploy or scale event. Either attach
+> a persistent disk (mount at `/var/data`, set
+> `DATABASE_URL=sqlite:////var/data/quizforge.db` and `UPLOAD_DIR=/var/data/uploads`),
+> or move to managed Postgres plus object storage. Without one of these, deployed
+> data will disappear.
+
+Netlify deploy previews (`*.netlify.app`) are accepted automatically via an
+origin regex, so previews work without re-editing `CORS_ORIGINS`.
+
+### 2. Deploy the frontend to Netlify
+
+`netlify.toml` already sets the build correctly:
+
+| Setting | Value |
+| --- | --- |
+| Base directory | `frontend` |
+| Build command | `npm ci && npm run build` |
+| Publish directory | `frontend/dist` |
+| Node version | 20 |
+
+Then add **one** environment variable in Netlify (Site settings → Environment
+variables):
+
+```
+VITE_API_BASE = https://your-backend.onrender.com
+```
+
+Redeploy after changing it — the value is compiled into the bundle.
+
+`netlify.toml` also contains the `/*` → `/index.html` SPA fallback. Without it,
+reloading a deep link such as `/quizzes/3/review` returns 404.
+
+### 3. Verify
+
+1. Open the Netlify URL and confirm the sidebar shows the backend online.
+2. Upload a PDF and click **Process document**. The text preview appearing proves
+   the browser reached the API cross-origin and CORS is correct.
+3. If the browser console shows a CORS error, the Netlify origin is missing from
+   the backend's `CORS_ORIGINS`.
+
+### Testing the production setup locally
+
+The frontend and API can be run on two different origins, which exercises CORS
+exactly as production does:
+
+```powershell
+cd frontend
+$env:VITE_API_BASE = "http://127.0.0.1:8000"
+npm run build
+python scripts\serve_dist.py dist 5174
+```
+
+Then drive the real flow with `scripts\e2e-upload.mjs`.

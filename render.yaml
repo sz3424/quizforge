@@ -1,0 +1,45 @@
+# Render blueprint for the QuizForge FastAPI backend.
+#
+# IMPORTANT — READ BEFORE DEPLOYING:
+# Render's free and starter web services have an EPHEMERAL filesystem. QuizForge
+# stores uploaded PDFs on local disk and uses SQLite, so on those instances your
+# documents, quizzes and results are LOST whenever the service restarts,
+# redeploys or scales. To keep data you must either:
+#
+#   (a) use a paid instance WITH a persistent disk mounted at /var/data, and set
+#       DATABASE_URL=sqlite:////var/data/quizforge.db and UPLOAD_DIR=/var/data/uploads
+#       (create the disk in the Render dashboard first), or
+#   (b) point DATABASE_URL at a managed Postgres and move uploads to S3/R2.
+#
+# The values below are safe only if data loss is acceptable.
+
+services:
+  - type: web
+    name: quizforge-api
+    runtime: python
+    plan: starter # NOT free: the free plan has no persistent disk.
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # Direct uvicorn invocation: the app object is `app` in backend/main.py, and
+    # the module is top-level (not app.main) because rootDir is `backend`.
+    # This is preferred over ./start.sh, which additionally requires the file to
+    # be committed with the executable bit set.
+    startCommand: uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      # Set these to match your real deployment.
+      - key: CORS_ORIGINS
+        sync: false # e.g. https://your-site.netlify.app
+      - key: OPENAI_API_KEY
+        sync: false # optional; leave unset to use the offline generator
+      # --- persistent storage (requires a disk mounted at /var/data) ---
+      - key: DATABASE_URL
+        value: sqlite:////var/data/quizforge.db
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+      - key: MAX_FILE_SIZE_MB
+        value: "25"
+      - key: MAX_PAGES
+        value: "200"

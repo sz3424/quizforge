@@ -1,0 +1,45 @@
+# Netlify configuration for the QUIZFORGE frontend.
+#
+# DEFAULT SETUP (recommended): the browser calls the backend directly on a
+# different origin. Set VITE_API_BASE in Netlify's build environment:
+#   VITE_API_BASE = https://your-backend.onrender.com
+# and add the Netlify site origin to the backend's CORS_ORIGINS env var.
+#
+# OPTIONAL SAME-ORIGIN SETUP: if you would rather proxy /api through Netlify
+# (no CORS at all), delete VITE_API_BASE, uncomment the proxy redirect below and
+# replace BACKEND_URL with your real backend URL. Netlify does NOT expand
+# environment variables inside a `to = ...` string, so this must be a literal.
+
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build"
+  # `publish` is an absolute path RELATIVE TO `base`, so this resolves to
+  # <repo>/frontend/dist. Writing "frontend/dist" here would resolve to
+  # frontend/frontend/dist and the deploy would publish nothing.
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# --- OPTIONAL: same-origin API proxy -----------------------------------------
+# Uncomment ONLY if you are not setting VITE_API_BASE. Remember to replace
+# BACKEND_URL with your deployed backend.
+#
+# [[redirects]]
+#   from = "/api/*"
+#   to = "https://BACKEND_URL/api/:splat"
+#   status = 200
+#   force = true
+
+# Single-page app fallback: without this, reloading /quizzes/3/review returns 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

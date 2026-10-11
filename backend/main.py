@@ -23,7 +23,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    # Use cors_origin_list so a deployed CORS_ORIGINS value is actually honoured.
+    allow_origins=settings.cors_origin_list,
+    allow_origin_regex=r"https://.*\.netlify\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -58,3 +58,9 @@ dist/
 
 # Local test documents
 test.pdf
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Browser E2E test artifacts
+frontend/e2e-upload-result.png

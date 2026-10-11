@@ -1,0 +1,24 @@
+# Normalise line endings so shell scripts keep a working shebang.
+# A CRLF-translated shebang ("#!/usr/bin/env bash\r") fails on Linux with
+# "bad interpreter", which breaks ./start.sh on a Render/Railway host.
+* text=auto
+
+*.sh text eol=lf
+backend/start.sh text eol=lf
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.toml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.mjs text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.pdf binary
+*.db binary
