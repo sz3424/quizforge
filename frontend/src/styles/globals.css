@@ -1,0 +1,269 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * QUIZFORGE design tokens.
+ *
+ * Two families of tokens, deliberately kept apart so they can never be confused:
+ *   --surface-*   background colours (card, sidebar, elevated, ...)
+ *   --content-*   text colours (primary / secondary / muted)
+ *
+ * Palette (dark):
+ *   background #0B0D12   sidebar #10131A   card #151922   elevated #1B202B
+ *   primary text #F5F7FA   secondary text #9BA4B5   muted text #6E7788
+ *   border #292F3C   accent #8B7CFF (hover #A195FF)
+ *   success #37C98A   warning #F4B860   error #F07178   info #64A9FF
+ */
+@layer base {
+  :root {
+    /* Surfaces */
+    --background: 11 13 18;
+    --foreground: 245 247 250;
+    --card: 21 25 34;
+    --card-foreground: 245 247 250;
+    --popover: 21 25 34;
+    --popover-foreground: 245 247 250;
+    --primary: 139 124 255;
+    --primary-hover: 161 149 255;
+    --primary-foreground: 255 255 255;
+    --secondary: 27 32 43;
+    --secondary-foreground: 245 247 250;
+    --muted: 27 32 43;
+    --muted-foreground: 245 247 250;
+    --accent: 41 47 60;
+    --accent-foreground: 245 247 250;
+    --destructive: 240 113 120;
+    --destructive-foreground: 17 19 24;
+    --border: 41 47 60;
+    --input: 41 47 60;
+    --ring: 139 124 255;
+    --radius: 0.5rem;
+
+    --sidebar: 16 19 26;
+    --elevated: 27 32 43;
+
+    /* Content (text) */
+    --content-primary: 245 247 250;
+    --content-secondary: 155 164 181;
+    --content-muted: 140 149 165;
+
+    /* Status */
+    --success: 55 201 138;
+    --success-foreground: 12 24 19;
+    --warning: 244 184 96;
+    --warning-foreground: 26 20 8;
+    --info: 100 169 255;
+    --info-foreground: 8 17 27;
+  }
+
+  .light {
+    --background: 255 255 255;
+    --foreground: 17 19 24;
+    --card: 255 255 255;
+    --card-foreground: 17 19 24;
+    --popover: 255 255 255;
+    --popover-foreground: 17 19 24;
+    --primary: 108 92 255;
+    --primary-hover: 88 72 235;
+    --primary-foreground: 255 255 255;
+    --secondary: 241 243 245;
+    --secondary-foreground: 17 19 24;
+    --muted: 241 243 245;
+    --muted-foreground: 17 19 24;
+    --accent: 237 239 243;
+    --accent-foreground: 17 19 24;
+    --destructive: 202 42 51;
+    --destructive-foreground: 255 255 255;
+    --border: 223 227 234;
+    --input: 203 210 221;
+    --ring: 108 92 255;
+
+    --sidebar: 248 249 251;
+    --elevated: 244 246 249;
+
+    --content-primary: 17 19 24;
+    --content-secondary: 71 80 94;
+    --content-muted: 99 106 120;
+
+    --success: 21 128 88;
+    --success-foreground: 255 255 255;
+    --warning: 150 95 5;
+    --warning-foreground: 255 255 255;
+    --info: 24 106 189;
+    --info-foreground: 255 255 255;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background;
+    /*
+     * Set explicitly rather than with @apply: this utility is only referenced
+     * here, so Tailwind never generates it and @apply would fail at runtime.
+     */
+    color: rgb(var(--content-primary));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
+  }
+}
+
+/*
+ * Answer option states.
+ *
+ * Every state declares BOTH a background and a foreground so option text can
+ * never inherit a near-black surface colour. Used by the quiz review screen,
+ * the interactive quiz and the results review so they stay identical.
+ */
+@layer components {
+  .answer-option {
+    @apply flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm;
+    background-color: rgb(var(--elevated));
+    border-color: rgb(var(--border));
+    color: rgb(var(--content-primary));
+    transition-property: border-color, background-color, box-shadow;
+    transition-duration: 150ms;
+  }
+
+  .answer-option-interactive {
+    @apply cursor-pointer;
+  }
+
+  .answer-option-interactive:hover {
+    border-color: rgb(var(--primary));
+    background-color: rgb(var(--accent));
+  }
+
+  .answer-option:focus-within {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+  }
+
+  .answer-option-selected {
+    border-color: rgb(var(--primary));
+    background-color: rgb(var(--primary) / 0.16);
+    color: rgb(var(--content-primary));
+    box-shadow: inset 0 0 0 1px rgb(var(--primary));
+  }
+
+  .answer-option-correct {
+    border-color: rgb(var(--success));
+    background-color: rgb(var(--success) / 0.14);
+    color: rgb(var(--content-primary));
+  }
+
+  .answer-option-incorrect {
+    border-color: rgb(var(--destructive));
+    background-color: rgb(var(--destructive) / 0.14);
+    color: rgb(var(--content-primary));
+  }
+
+  .answer-option[aria-disabled='true'] {
+    cursor: not-allowed;
+    opacity: 0.55;
+    color: rgb(var(--content-muted));
+  }
+
+  .answer-option-badge {
+    @apply inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide;
+  }
+
+  /* Explanations and supporting prose. */
+  .explanation-block {
+    @apply mt-3 rounded-lg border px-4 py-3 text-sm leading-relaxed;
+    background-color: rgb(var(--elevated));
+    border-color: rgb(var(--border));
+    color: rgb(var(--content-secondary));
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in {
+    animation: animateIn 0.2s ease-out;
+  }
+
+  .animate-out {
+    animation: animateOut 0.2s ease-out;
+  }
+
+  /* Reduced motion: honour the user's OS preference. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  @keyframes animateIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes animateOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--elevated));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--content-muted));
+}
+
+/* Focus visible styles */
+:focus-visible {
+  outline: 2px solid rgb(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Selection styles */
+::selection {
+  background-color: rgb(var(--primary) / 0.3);
+  color: rgb(var(--content-primary));
+}

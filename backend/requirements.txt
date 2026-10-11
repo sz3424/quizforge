@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pymupdf
+python-multipart
+python-dotenv
+openai
+pydantic-settings
+pydantic>=2.0

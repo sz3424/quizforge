@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+
+# Build outputs
+frontend/dist/
+frontend/.eslintcache
+
+# Database
+backend/quizforge.db
+backend/quizforge.db-journal
+
+# Uploads
+storage/uploads/
+
+# Logs
+*.log
+
+# IDE/Editor
+.vscode/
+.vscode-local
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+
+# Coverage reports
+coverage.xml
+htmlcov/
+
+# Local databases and SQLite files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Backend virtual environments
+backend/venv/
+
+# Uploaded documents and local storage
+storage/
+
+# Root build output
+dist/
+
+# Local test documents
+test.pdf
